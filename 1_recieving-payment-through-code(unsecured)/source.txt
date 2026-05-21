@@ -1,0 +1,1 @@
+https://razorpay.com/docs/payments/payment-gateway/web-integration/standard/integration-steps/
