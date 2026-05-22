@@ -7,6 +7,20 @@ export default function CheckoutModal({ open, onClose, course, onCheckout }) {
     const modalRef = useRef(null);
 
     useEffect(() => {
+        return () => {
+            const razorpayScript = document.querySelector('#razorpay-script');
+            if (razorpayScript) {
+                return;
+            }
+            const script = document.createElement('script');
+            script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+            script.id = 'razorpay-script';
+            script.async = true
+            document.body.append(script);
+        };
+    }, []);
+
+    useEffect(() => {
         if (!open) {
             setTouched({ name: false, mobile: false });
             return;
