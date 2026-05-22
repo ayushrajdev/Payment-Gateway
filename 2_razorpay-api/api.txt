@@ -1,0 +1,1 @@
+https://www.postman.com/razorpaydev/razorpay-public-workspace/request/tw9iaxm/fetch-all-payments?sideView=agentMode
