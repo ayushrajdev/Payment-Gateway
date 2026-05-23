@@ -1,24 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 
-export default function CheckoutModal({ open, onClose, course, onCheckout }) {
+export default function CheckoutModal({ open, onClose, course }) {
     const [name, setName] = useState('john doe');
     const [mobile, setMobile] = useState('9876543210');
     const [touched, setTouched] = useState({ name: false, mobile: false });
     const modalRef = useRef(null);
-
-    useEffect(() => {
-        return () => {
-            const razorpayScript = document.querySelector('#razorpay-script');
-            if (razorpayScript) {
-                return;
-            }
-            const script = document.createElement('script');
-            script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-            script.id = 'razorpay-script';
-            script.async = true;
-            document.body.append(script);
-        };
-    }, []);
 
     useEffect(() => {
         if (!open) {
@@ -63,77 +49,28 @@ export default function CheckoutModal({ open, onClose, course, onCheckout }) {
             setTouched({ name: true, mobile: true });
             return;
         }
-        onCheckout?.({
+        const payload = {
             id: course.id,
             name: course.name,
             price: course.price,
-            user: { name: name.trim(), mobile: mobile.trim() },
-        });
+            user: { name, mobile },
+        };
 
-        console.log({
-            id: course.id,
-            name: course.name,
-            price: course.price,
-            user: { name: name.trim(), mobile: mobile.trim() },
-        });
-
-        try {
-            const res = await fetch('http://localhost:4000/initiate-order', {
-                method: 'POST',
-                body: JSON.stringify({
-                    id: course.id,
-                    name: course.name,
-                    price: course.price,
-                    user: { name: name.trim(), mobile: mobile.trim() },
-                }),
+        const checkoutSessionResponse = await fetch(
+            'http://localhost:4000/create-checkout-session',
+            {
+                body: JSON.stringify(payload),
                 headers: {
                     'Content-Type': 'application/json',
                 },
-            });
-            const { order_id } = await res.json();
-            if (!order_id) {
-                console.log(order_id);
-                return;
-            }
-            console.log(order_id);
-            var options = {
-                key: 'YOUR_KEY_ID',
-                name: 'Acme Corp', //your business name
-                description: 'Test Transaction',
-                order_id, //This is a sample Order ID. Pass the `id` obtained in the response of Step 1
-                handler: function (response) {
-                    console.log(response);
-                },
-            };
-            var rzp = new Razorpay({
-                key: 'rzp_test_SreKkWHYNxa7dk',
-                name: 'Acme Corp', //your business name
-                description: 'Test Transaction',
-                order_id,
-                handler: async function (response) {
-                    const orderResponse = await fetch(
-                        'http://localhost:4000/verify-order',
-                        {
-                            method: 'GET',
-                            body: JSON.stringify({
-                                order_id: response.razorpay_order_id,
-                            }),
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
-                        },
-                    );
-                    const orderStatus = await orderResponse.json();
-                    console.log(orderStatus);
-                },
-            });
-            rzp.open();
-            rzp.on('payment.failed', function (response) {
-                console.log(response);
-            });
-        } catch (error) {
-            console.log(error);
+                method: 'POST',
+            },
+        );
+        const { checkoutUrl } = await checkoutSessionResponse.json();
+        if (!checkoutUrl) {
+            return;
         }
+        window.location.href = checkoutUrl
     };
 
     if (!open) return null;
@@ -158,7 +95,7 @@ export default function CheckoutModal({ open, onClose, course, onCheckout }) {
                     </h2>
                     <button
                         onClick={onClose}
-                        className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
+                        className="px-2 py-1 rounded-lg text-white cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800"
                         aria-label="Close"
                     >
                         ✕
