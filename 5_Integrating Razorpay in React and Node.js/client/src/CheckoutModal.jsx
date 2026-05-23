@@ -96,15 +96,7 @@ export default function CheckoutModal({ open, onClose, course, onCheckout }) {
                 return;
             }
             console.log(order_id);
-            var options = {
-                key: 'YOUR_KEY_ID',
-                name: 'Acme Corp', //your business name
-                description: 'Test Transaction',
-                order_id, //This is a sample Order ID. Pass the `id` obtained in the response of Step 1
-                handler: function (response) {
-                    console.log(response);
-                },
-            };
+            
             var rzp = new Razorpay({
                 key: 'rzp_test_SreKkWHYNxa7dk',
                 name: 'Acme Corp', //your business name
