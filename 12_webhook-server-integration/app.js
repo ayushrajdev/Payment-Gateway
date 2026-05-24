@@ -18,22 +18,32 @@ app.use(
     }),
 );
 
+app.post(
+    '/stripe/webhook',
+    express.raw({ type: 'application/json' }),
+    async (req, res) => {
+        const srtipeSignature = req.header['stripe-signature'];
+        try {
+            var payload = stripe.webhooks.constructEvent(
+                req.body,
+                srtipeSignature,
+                secret,
+            );
+        } catch (err) {
+            console.log(
+                `⚠️ Webhook signature verification failed.`,
+                err.message,
+            );
+            return res.status(200).end();
+        }
+        const userInfo = payload.data.object.metadata;
+        users.push(userInfo);
+        await writeFile('./users.json', JSON.stringify(users, null, 2));
+        res.status(200).end('done');
+    },
+);
+
 app.use(express.json());
-
-app.get('/', (req, res) => {
-    res.json(courses);
-});
-
-app.post('/stripe/webhook', async (req, res) => {
-    console.log(req.body);
-    const userInfo = req.body.data.object.metadata;
-    users.push(userInfo);
-    await writeFile(
-        './users.json',
-        JSON.stringify(users, null, 2),
-    );
-    res.status(200).end('done');
-});
 
 app.post('/create-checkout-session', async (req, res) => {
     const courseId = req.body.id;
@@ -57,7 +67,6 @@ app.post('/create-checkout-session', async (req, res) => {
     const newCheckoutSession = await stripe.checkout.sessions.create({
         mode: 'payment',
         success_url: 'http://localhost:5173?session_id={CHECKOUT_SESSION_ID}',
-        // cancel_url: "http://procodrr.com",
         line_items: [
             {
                 price_data: {
@@ -97,6 +106,9 @@ app.post('/create-checkout-session', async (req, res) => {
 });
 
 app.post('/verify-checkout-session', async (req, res) => {
+    if (!req.body.sessionId) {
+        return res.json({});
+    }
     const checkoutSession = await stripe.checkout.sessions.retrieve(
         req.body.sessionId,
     );
@@ -119,6 +131,10 @@ app.post('/verify-checkout-session', async (req, res) => {
     }
 
     return res.json({ message: 'Payment is not successful', status: 'failed' });
+});
+
+app.get('/', (req, res) => {
+    res.json(courses);
 });
 
 app.listen(4000, () => {
