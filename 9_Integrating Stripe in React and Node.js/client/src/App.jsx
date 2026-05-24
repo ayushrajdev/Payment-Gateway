@@ -12,7 +12,7 @@ export default function App() {
             const checkoutSessionResponse = await fetch(
                 'http://localhost:4000/verify-checkout-session',
                 {
-                    body: JSON.stringify({ checkoutSessionId }),
+                    body: JSON.stringify({ sessionId:checkoutSessionId }),
                     headers: {
                         'Content-Type': 'application/json',
                     },
