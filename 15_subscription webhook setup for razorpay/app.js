@@ -1,5 +1,6 @@
 import express from 'express';
 import Razorpay from 'razorpay';
+import crypto from 'node:crypto';
 
 const app = express();
 
@@ -12,6 +13,26 @@ app.post('/razorpay/webhook', async (req, res, next) => {
     const subscriptionPayload = req.body.payload.subscription.entity;
     console.log(subscriptionPayload.id);
 
+    const providedSignature = req.header['x-razorpay-signature'];
+    var secret = 'mysecret';
+
+    //    const generatedSignature = crypto
+    //         .createHmac('sha256', secret)
+    //         .update(JSON.stringify(req.body))
+    //         .digest('hex');
+
+    //     if (!(providedSignature==generatedSignature)) {
+    //         return res.end("request not came from the trusted authorized party")
+    //     }
+
+    const isSignatureValid = Razorpay.validateWebhookSignature(
+        JSON.stringify(req.body),
+        providedSignature,
+        secret,
+    );
+    if (!isSignatureValid) {
+        return res.end();
+    }
     switch (req.body.event) {
         case 'subscription.pause':
             break;
